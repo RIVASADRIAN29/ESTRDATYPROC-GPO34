@@ -1,0 +1,19 @@
+# Creando una tupla
+mi_tupla = ("Python", "Java", "C++", "JavaScript")
+
+# Imprimir la tupla completa
+print("Tupla completa:", mi_tupla)
+
+# Acceder a un elemento por índice
+print("Primer elemento:", mi_tupla[0])
+
+# Acceder al último elemento
+print("Último elemento:", mi_tupla[-1])
+
+# Longitud de la tupla
+print("Cantidad de elementos:", len(mi_tupla))
+
+# Recorrer la tupla
+print("Recorriendo la tupla:")
+for lenguaje in mi_tupla:
+    print("-", lenguaje)

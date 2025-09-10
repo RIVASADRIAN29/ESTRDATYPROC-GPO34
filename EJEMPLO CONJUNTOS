@@ -1,22 +1,22 @@
-
+# Conjunto con asignaturas de un estudiante
 asignaturas = {"Matemáticas", "Programación", "Administración", "Economía", "Programación"}
 
-
+# Imprimir el conjunto
 print("Asignaturas del estudiante:", asignaturas)
 
-
+# Verificar si una asignatura está en el conjunto
 print("¿Estudia Programación?", "Programación" in asignaturas)
 print("¿Estudia Historia?", "Historia" in asignaturas)
 
-
+# Recorrer el conjunto
 print("\nMostrando todas las asignaturas:")
 for materia in asignaturas:
     print("-", materia)
 
-
+# Agregar una nueva asignatura
 asignaturas.add("Contabilidad")
 print("\nAsignaturas después de agregar Contabilidad:", asignaturas)
 
-
+# Eliminar una asignatura
 asignaturas.remove("Economía")
 print("Asignaturas después de eliminar Economía:", asignaturas)

@@ -1,24 +1,24 @@
-
+# Lista con datos de un estudiante
 estudiante = ["Lucía Martínez", 21, "Ingeniería Industrial", "7mo semestre"]
 
-
+# Imprimir la lista completa
 print("Datos del estudiante:", estudiante)
 
-
+# Acceder a cada elemento por índice
 print("Nombre:", estudiante[0])
 print("Edad:", estudiante[1])
 print("Carrera:", estudiante[2])
 print("Semestre:", estudiante[3])
 
-
+# Modificar un elemento
 estudiante[1] = 22
 print("\nEdad actualizada:", estudiante[1])
 
-
+# Agregar un nuevo elemento
 estudiante.append("Promedio: 9.2")
 print("Lista después de agregar promedio:", estudiante)
 
-
+# Recorrer la lista
 print("\nRecorriendo la lista completa:")
 for dato in estudiante:
     print("-", dato)

@@ -1,15 +1,16 @@
-
+# Tupla con datos de un estudiante
 estudiante = ("Ana López", 20, "Ingeniería en Sistemas", "6to semestre")
 
-
+# Imprimir todos los datos
 print("Datos del estudiante:", estudiante)
 
+# Acceder a cada dato por índice
 print("Nombre:", estudiante[0])
 print("Edad:", estudiante[1])
 print("Carrera:", estudiante[2])
 print("Semestre:", estudiante[3])
 
-
+# Usando la tupla en un recorrido
 print("\nMostrando la información con un ciclo:")
 for dato in estudiante:
     print("-", dato)

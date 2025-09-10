@@ -1,0 +1,22 @@
+
+asignaturas = {"Matemáticas", "Programación", "Administración", "Economía", "Programación"}
+
+
+print("Asignaturas del estudiante:", asignaturas)
+
+
+print("¿Estudia Programación?", "Programación" in asignaturas)
+print("¿Estudia Historia?", "Historia" in asignaturas)
+
+
+print("\nMostrando todas las asignaturas:")
+for materia in asignaturas:
+    print("-", materia)
+
+
+asignaturas.add("Contabilidad")
+print("\nAsignaturas después de agregar Contabilidad:", asignaturas)
+
+
+asignaturas.remove("Economía")
+print("Asignaturas después de eliminar Economía:", asignaturas)

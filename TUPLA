@@ -1,19 +1,15 @@
-# Creando una tupla
-mi_tupla = ("Python", "Java", "C++", "JavaScript")
 
-# Imprimir la tupla completa
-print("Tupla completa:", mi_tupla)
+estudiante = ("Ana López", 20, "Ingeniería en Sistemas", "6to semestre")
 
-# Acceder a un elemento por índice
-print("Primer elemento:", mi_tupla[0])
 
-# Acceder al último elemento
-print("Último elemento:", mi_tupla[-1])
+print("Datos del estudiante:", estudiante)
 
-# Longitud de la tupla
-print("Cantidad de elementos:", len(mi_tupla))
+print("Nombre:", estudiante[0])
+print("Edad:", estudiante[1])
+print("Carrera:", estudiante[2])
+print("Semestre:", estudiante[3])
 
-# Recorrer la tupla
-print("Recorriendo la tupla:")
-for lenguaje in mi_tupla:
-    print("-", lenguaje)
+
+print("\nMostrando la información con un ciclo:")
+for dato in estudiante:
+    print("-", dato)

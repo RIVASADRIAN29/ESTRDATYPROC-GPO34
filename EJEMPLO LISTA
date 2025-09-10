@@ -1,0 +1,24 @@
+
+estudiante = ["Lucía Martínez", 21, "Ingeniería Industrial", "7mo semestre"]
+
+
+print("Datos del estudiante:", estudiante)
+
+
+print("Nombre:", estudiante[0])
+print("Edad:", estudiante[1])
+print("Carrera:", estudiante[2])
+print("Semestre:", estudiante[3])
+
+
+estudiante[1] = 22
+print("\nEdad actualizada:", estudiante[1])
+
+
+estudiante.append("Promedio: 9.2")
+print("Lista después de agregar promedio:", estudiante)
+
+
+print("\nRecorriendo la lista completa:")
+for dato in estudiante:
+    print("-", dato)

@@ -1,4 +1,4 @@
-
+# Diccionario con datos de un estudiante
 estudiante = {
     "nombre": "Ana López",
     "edad": 20,
@@ -6,16 +6,16 @@ estudiante = {
     "semestre": "6to semestre"
 }
 
-
+# Imprimir todo el diccionario
 print("Datos del estudiante:", estudiante)
 
-
+# Acceder a cada dato usando la clave
 print("Nombre:", estudiante["nombre"])
 print("Edad:", estudiante["edad"])
 print("Carrera:", estudiante["carrera"])
 print("Semestre:", estudiante["semestre"])
 
-
+# Recorrer el diccionario
 print("\nMostrando la información con un ciclo:")
 for clave, valor in estudiante.items():
     print(f"{clave.capitalize()}: {valor}")

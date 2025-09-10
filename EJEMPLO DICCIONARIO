@@ -1,0 +1,21 @@
+
+estudiante = {
+    "nombre": "Ana López",
+    "edad": 20,
+    "carrera": "Ingeniería en Sistemas",
+    "semestre": "6to semestre"
+}
+
+
+print("Datos del estudiante:", estudiante)
+
+
+print("Nombre:", estudiante["nombre"])
+print("Edad:", estudiante["edad"])
+print("Carrera:", estudiante["carrera"])
+print("Semestre:", estudiante["semestre"])
+
+
+print("\nMostrando la información con un ciclo:")
+for clave, valor in estudiante.items():
+    print(f"{clave.capitalize()}: {valor}")

@@ -1,0 +1,263 @@
+import json
+import os
+from dataclasses import dataclass, asdict
+from datetime import datetime
+from typing import List, Dict, Optional
+import logging
+import pandas as pd
+
+# Configuración básica del registro (logging)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+
+
+# ---------------------------
+# Clase Cliente
+# ---------------------------
+@dataclass
+class Cliente:
+    id_cliente: str
+    nombre: str
+    correo: Optional[str] = None
+    es_nuevo: bool = True
+    creado_en: str = None
+
+    def _post_init_(self):
+        if self.creado_en is None:
+            self.creado_en = datetime.utcnow().isoformat()
+
+    def a_diccionario(self) -> Dict:
+        return asdict(self)
+
+    @staticmethod
+    def desde_diccionario(d: Dict):
+        return Cliente(
+            id_cliente=d["id_cliente"],
+            nombre=d.get("nombre", ""),
+            correo=d.get("correo"),
+            es_nuevo=d.get("es_nuevo", True),
+            creado_en=d.get("creado_en"),
+        )
+
+
+# ---------------------------
+# Clase ProductoVenta
+# ---------------------------
+@dataclass
+class ProductoVenta:
+    id_producto: str
+    descripcion: str
+    precio_unitario: float
+    cantidad: int
+
+    def subtotal(self) -> float:
+        return self.precio_unitario * self.cantidad
+
+    def a_diccionario(self):
+        return asdict(self)
+
+    @staticmethod
+    def desde_diccionario(d: Dict):
+        return ProductoVenta(
+            id_producto=d["id_producto"],
+            descripcion=d.get("descripcion", ""),
+            precio_unitario=float(d.get("precio_unitario", 0.0)),
+            cantidad=int(d.get("cantidad", 1)),
+        )
+
+
+# ---------------------------
+# Clase Venta
+# ---------------------------
+@dataclass
+class Venta:
+    id_venta: str
+    id_cliente: str
+    productos: List[ProductoVenta]
+    fecha: str
+    porcentaje_descuento: float = 0.0  # 0.10 = 10%
+    total_sin_descuento: float = 0.0
+    total_con_descuento: float = 0.0
+
+    def calcular_totales(self):
+        self.total_sin_descuento = sum(p.subtotal() for p in self.productos)
+        self.total_con_descuento = round(self.total_sin_descuento * (1 - self.porcentaje_descuento), 2)
+
+    def a_diccionario(self):
+        return {
+            "id_venta": self.id_venta,
+            "id_cliente": self.id_cliente,
+            "productos": [p.a_diccionario() for p in self.productos],
+            "fecha": self.fecha,
+            "porcentaje_descuento": self.porcentaje_descuento,
+            "total_sin_descuento": self.total_sin_descuento,
+            "total_con_descuento": self.total_con_descuento,
+        }
+
+    @staticmethod
+    def desde_diccionario(d: Dict):
+        productos = [ProductoVenta.desde_diccionario(it) for it in d.get("productos", [])]
+        venta = Venta(
+            id_venta=d["id_venta"],
+            id_cliente=d["id_cliente"],
+            productos=productos,
+            fecha=d.get("fecha", datetime.utcnow().isoformat()),
+            porcentaje_descuento=float(d.get("porcentaje_descuento", 0.0)),
+        )
+        venta.total_sin_descuento = float(d.get("total_sin_descuento", 0.0))
+        venta.total_con_descuento = float(d.get("total_con_descuento", 0.0))
+        return venta
+
+
+# ---------------------------
+# Clase GestorVentas
+# ---------------------------
+class GestorVentas:
+    def _init_(self, carpeta_datos: str = "datos", archivo_estado: str = "estado.json", descuento_nuevo_cliente: float = 0.10):
+        self.carpeta_datos = carpeta_datos
+        os.makedirs(self.carpeta_datos, exist_ok=True)
+        self.ruta_estado = os.path.join(self.carpeta_datos, archivo_estado)
+        self.clientes: Dict[str, Cliente] = {}
+        self.ventas: Dict[str, Venta] = {}
+        self.descuento_nuevo_cliente = float(descuento_nuevo_cliente)
+        self.cargar_estado()
+
+    # ---------------------------
+    # Guardar y cargar estado
+    # ---------------------------
+    def guardar_estado(self):
+        """Guarda el estado actual (clientes y ventas) en un archivo JSON."""
+        try:
+            datos = {
+                "clientes": {cid: c.a_diccionario() for cid, c in self.clientes.items()},
+                "ventas": {vid: v.a_diccionario() for vid, v in self.ventas.items()},
+                "guardado_en": datetime.utcnow().isoformat(),
+            }
+            with open(self.ruta_estado, "w", encoding="utf-8") as f:
+                json.dump(datos, f, ensure_ascii=False, indent=2)
+            logging.info(f"Estado guardado en {self.ruta_estado}")
+            return True
+        except (IOError, PermissionError) as e:
+            logging.error(f"Error al guardar estado: {e}")
+            return False
+
+    def cargar_estado(self):
+        """Carga los datos guardados si existen (deserialización)."""
+        if not os.path.exists(self.ruta_estado):
+            logging.info("No se encontró estado previo; iniciando vacío.")
+            return False
+        try:
+            with open(self.ruta_estado, "r", encoding="utf-8") as f:
+                datos = json.load(f)
+            self.clientes = {cid: Cliente.desde_diccionario(d) for cid, d in datos.get("clientes", {}).items()}
+            self.ventas = {vid: Venta.desde_diccionario(d) for vid, d in datos.get("ventas", {}).items()}
+            logging.info(f"Estado cargado desde {self.ruta_estado}")
+            return True
+        except (IOError, json.JSONDecodeError) as e:
+            logging.error(f"Error al cargar estado: {e}")
+            return False
+
+    # ---------------------------
+    # Operaciones principales
+    # ---------------------------
+    def registrar_cliente_si_nuevo(self, id_cliente: str, nombre: str, correo: Optional[str] = None) -> Cliente:
+        """Verifica si el cliente ya existe; si no, lo crea como nuevo."""
+        if id_cliente in self.clientes:
+            cliente = self.clientes[id_cliente]
+            cliente.es_nuevo = False
+            return cliente
+        cliente = Cliente(id_cliente=id_cliente, nombre=nombre, correo=correo, es_nuevo=True)
+        self.clientes[id_cliente] = cliente
+        logging.info(f"Cliente nuevo registrado: {id_cliente}")
+        return cliente
+
+    def crear_venta(self, id_venta: str, id_cliente: str, nombre_cliente: str, productos_datos: List[Dict], fecha: Optional[str] = None) -> Optional[Venta]:
+        """
+        Crea una venta; si el cliente es nuevo, aplica un descuento.
+        productos_datos: lista de diccionarios con id_producto, descripcion, precio_unitario, cantidad
+        """
+        try:
+            cliente = self.registrar_cliente_si_nuevo(id_cliente, nombre_cliente)
+            productos = [ProductoVenta.desde_diccionario(p) for p in productos_datos]
+            fecha_venta = fecha or datetime.utcnow().isoformat()
+            descuento = self.descuento_nuevo_cliente if cliente.es_nuevo else 0.0
+
+            venta = Venta(
+                id_venta=id_venta,
+                id_cliente=id_cliente,
+                productos=productos,
+                fecha=fecha_venta,
+                porcentaje_descuento=descuento
+            )
+            venta.calcular_totales()
+            self.ventas[id_venta] = venta
+            cliente.es_nuevo = False
+            guardado = self.guardar_estado()
+            if not guardado:
+                logging.warning("Venta registrada en memoria, pero no se guardó en disco.")
+            return venta
+        except Exception as e:
+            logging.exception(f"Error al crear la venta: {e}")
+            return None
+
+    # ---------------------------
+    # Exportar ventas a Excel
+    # ---------------------------
+    def exportar_ventas_a_excel(self, ruta_archivo: str) -> bool:
+        """Exporta todas las ventas a un archivo Excel (.xlsx)."""
+        try:
+            if not self.ventas:
+                logging.info("No hay ventas para exportar.")
+                df = pd.DataFrame(columns=["id_venta", "id_cliente", "fecha", "porcentaje_descuento", "total_sin_descuento", "total_con_descuento", "productos"])
+            else:
+                filas = []
+                for v in self.ventas.values():
+                    filas.append({
+                        "id_venta": v.id_venta,
+                        "id_cliente": v.id_cliente,
+                        "fecha": v.fecha,
+                        "porcentaje_descuento": v.porcentaje_descuento,
+                        "total_sin_descuento": v.total_sin_descuento,
+                        "total_con_descuento": v.total_con_descuento,
+                        "productos": json.dumps([p.a_diccionario() for p in v.productos], ensure_ascii=False),
+                    })
+                df = pd.DataFrame(filas)
+
+            df.to_excel(ruta_archivo, index=False)
+            logging.info(f"Ventas exportadas correctamente a {ruta_archivo}")
+            return True
+        except PermissionError:
+            logging.error("No se pudo escribir el archivo. ¿Está abierto?")
+            return False
+        except IOError as e:
+            logging.error(f"Error de entrada/salida al exportar a Excel: {e}")
+            return False
+        except Exception as e:
+            logging.exception(f"Error inesperado al exportar: {e}")
+            return False
+
+
+# ---------------------------
+# Ejemplo de uso
+# ---------------------------
+if _name_ == "_main_":
+    gestor = GestorVentas(carpeta_datos="datos", archivo_estado="estado.json", descuento_nuevo_cliente=0.10)
+
+    productos = [
+        {"id_producto": "P001", "descripcion": "Producto A", "precio_unitario": 50.0, "cantidad": 2},
+        {"id_producto": "P002", "descripcion": "Producto B", "precio_unitario": 30.0, "cantidad": 1}
+    ]
+
+    venta = gestor.crear_venta(
+        id_venta="V0001",
+        id_cliente="CLI1001",
+        nombre_cliente="Juan Pérez",
+        productos_datos=productos
+    )
+
+    if venta:
+        print("Venta creada correctamente:")
+        print(venta.a_diccionario())
+
+    # Exportar las ventas a Excel
+    exportado = gestor.exportar_ventas_a_excel("datos/ventas_exportadas.xlsx")
+    print("Exportado a Excel:", exportado)
